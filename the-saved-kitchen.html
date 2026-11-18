@@ -493,6 +493,7 @@
             <div class="free-confirm" id="freeConfirm">
               <p class="ok">Your free recipe is ready — download it here.</p>
               <a class="btn-red btn-download" href="free-recipe.pdf" download>Download the free recipe (PDF) ↓</a>
+              <p style="margin:0 0 1.1rem;color:var(--muted)">Check your inbox — the link is on its way too.</p>
               <div id="freeRecipe"></div>
             </div>
           </div>
@@ -1395,9 +1396,31 @@
       document.getElementById("freeError").style.display = ok ? "none" : "block";
       if (!ok) { input.focus(); return; }
       try { localStorage.setItem("tsk_free_email", email); } catch (err) {}
+      /* Show the download straight away — it appears whether or not the
+         email send below succeeds. */
       document.getElementById("freeRecipe").innerHTML = recipeHTML(pomodoro);
       document.getElementById("freeConfirm").style.display = "block";
       document.getElementById("freeConfirm").scrollIntoView({ behavior: "smooth", block: "nearest" });
+      /* Send the email via FormSubmit: the subscriber gets an autoresponse
+         with the free recipe PDF link, and the address is delivered to the
+         shop inbox. */
+      var btn = this.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = "Sending…"; }
+      fetch("https://formsubmit.co/ajax/tasref.net@gmail.com", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          email: email,
+          _subject: "New free recipe subscriber",
+          _template: "table",
+          _captcha: "false",
+          _autoresponse: "Here is your free recipe from The Saved Kitchen — Classic Spaghetti Pomodoro: https://salmank55.github.io/the-saved-kitchen/free-recipe.pdf"
+        })
+      }).then(function () {
+        if (btn) { btn.textContent = "Sent — check your inbox"; }
+      }).catch(function () {
+        if (btn) { btn.disabled = false; btn.textContent = "Send me the free recipe"; }
+      });
     });
 
     /* ==================== INIT ==================== */
